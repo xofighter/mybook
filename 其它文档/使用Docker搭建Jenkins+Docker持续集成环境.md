@@ -1,0 +1,228 @@
+本文介绍如何通过Jenkins的docker镜像从零开始构建一个基于docker镜像的持续集成环境，包含自动化构建、发布到仓库\并部署上线。
+
+## 0. 前置条件
+
+服务器安装docker，并启动docker swarm
+
+注意docker启动时，需要开启tcp端口
+
+## 1.Jenkins 安装
+
+### 1.1 命令行启动：
+
+安装比较简单，直接运行
+
+```
+docker run -p 8080:8080 -p 50000:50000 -d  -v /home/jenkins-home-docker:/var/jenkins_home  jenkins/jenkins:lts
+```
+
+运行后查看日志，获取token，打开ip:8080，输入token，安装常用插件
+
+### 1.2 使用swarm集群管理工具
+
+在services里，添加服务
+
+
+
+添加服务
+
+## 2.Jenkins 插件安装
+
+我们需要一些插件支持
+
+- Docker plugin  ： 提供docker 构建和发布
+- SSH plugin ： 提供通过SSH在远程主机执行命令，用于部署服务
+- maven plugin： 支持maven
+
+系统管理-插件管理里进行安装即可。
+
+### 2.1 docker 配置
+
+“系统管理-系统设置-云” 里新增
+
+
+
+新增云
+
+注意docker host url需要加上tcp://
+
+### 2.2 ssh主机 配置
+
+“系统管理-系统设置-SSH remote hosts” 里配置SSH远程主机
+
+
+
+SSH管理
+
+### 2.3 配置下email
+
+在系统设置里直接设置，配置下smtp
+
+### 2.4 配置jdk、maven
+
+在系统管理-全局工具配置里设置JDK自动安装
+
+
+
+JDK
+
+maven同样配置即可
+
+## 3.Jenkins 项目配置
+
+### 3.1 新建项目
+
+我们是maven项目，选择maven
+
+
+
+maven项目
+
+### 3.2 配置源码管理
+
+首先配置源码，可以是git或者svn，项目组用的是svn
+
+
+
+SVN
+
+### 3.3 配置触发器
+
+配置自动构建，勾选POLL SCM，配置5分钟检查一次，当svn发生变化时，会自动启动构建
+
+
+
+enter description here
+
+### 3.4 配置Build
+
+简单的maven项目，构建使用pom.xml，执行package -DskipTests
+
+
+
+enter description here
+
+### 3.5 配置Post Steps
+
+Post Steps是指构建完成执行的步骤，我们会实现构建docker，发布docker和部署服务
+
+#### 3.5.1 配置docker
+
+点击add post-build step，选择Build/publish docker image:
+
+
+
+enter description here
+
+选择cloud为先前配置的docker-cloud，image填写私服发布地址，勾上push image。
+
+
+
+enter description here
+
+这样配置，构建完成后会自动push到私服。
+
+#### 3.5.2 配置远程部署
+
+我们使用docker stack来部署服务
+
+首先，编写docker-compose.yml
+
+```
+version: "3"
+services:
+   backend:
+    image: 192.168.86.8:5000/allinone-service-cicd
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "8007:8006"
+    networks:
+      - webnet
+networks:
+  webnet:
+```
+
+保存到docker服务器，比如/root/allinone/allinone-service/allinone目录
+
+然后，添加post-build step：
+
+
+
+enter description here
+
+选择配置好的远程docker主机：
+
+
+
+enter description here
+
+填入命令：
+
+```
+cd /root/allinone/allinone-service/allinone
+docker stack down allinone-cicd
+docker stack deploy -c docker-compose.yml allinone-cicd
+```
+
+- docker stack down 将原先服务下线
+- docker stack deploy -c 重新部署服务
+
+## 4 开始构建
+
+### 4.1 手动构建
+
+回到工程，点击立即构建，第一次构建会自动下载jdk，maven，会比较慢
+
+
+
+enter description here
+
+等待一会，构建成功：
+
+```
+9e70992ebc17: Pushing [===============================================>   ]  42.66MB/45.02MB
+9e70992ebc17: Pushing [=================================================> ]  44.96MB/45.02MB
+9e70992ebc17: Pushing [==================================================>]  45.02MB
+9e70992ebc17: Pushed
+latest: digest: sha256:5df6c97d6173527bc92ddc436fcef063069cd1cd3d0da8a0c74d2238443ae4d6 size: 1582
+Docker Build Done
+[SSH] script:
+
+cd /root/allinone/allinone-service/allinone
+docker stack down allinone-cicd
+docker stack deploy -c docker-compose.yml allinone-cicd
+
+[SSH] executing...
+Removing service allinone-cicd_backend
+Removing network allinone-cicd_webnet
+Creating network allinone-cicd_webnet
+Creating service allinone-cicd_backend
+
+[SSH] completed
+[SSH] exit-status: 0
+
+Finished: SUCCESS
+```
+
+如果配置了邮件通知，会收到构建成功邮件。
+
+### 4.2 自动构建
+
+SVN提交一个变更，等几分钟，查看Subversion Polling Log,已经有记录了，发现已经自动构建了一个版本
+
+
+
+enter description here
+
+完美！
+
+作者：JadePeng
+
+链接：https://www.jianshu.com/p/ecc2a4baa1b1
+
+來源：简书
+
+简书著作权归作者所有，任何形式的转载都请联系作者获得授权并注明出处。
