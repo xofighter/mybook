@@ -1,36 +1,35 @@
-​      在执行测试用例过程中，用户想要一些信息打印输出到控制台。信息可以是很多格式，完全取决于目的。当前我们在用Selenium进行自动化测试，本框架也需要输出一些信息来告诉使用的人，当前在执行什么用例，执行用例的哪一个步骤，如果失败有没有相关报错。如果使用log4j，我们在执行selenium自动化测试是可以实现日志输出的功能。一般来说，我们发现问题，上报Bug一般要提供一下要素：
+[TOC]
 
-1）  一个完整的复现问题的场景步骤
-
-2）  描述问题或者失败的原因（如果可能）
-
-3）  记录时间戳，方便开发人员去快速调查问题。
-
- 
-
+# log4j输出日志
+在执行测试用例过程中，用户想要一些信息打印输出到控制台。信息可以是很多格式，完全取决于目的。当前我们在用Selenium进行自动化测试，本框架也需要输出一些信息来告诉使用的人，当前在执行什么用例，执行用例的哪一个步骤，如果失败有没有相关报错。如果使用log4j，我们在执行selenium自动化测试是可以实现日志输出的功能。一般来说，我们发现问题，上报Bug一般要提供一下要素：
+1. 一个完整的复现问题的场景步骤
+2. 描述问题或者失败的原因（如果可能）
+3. 记录时间戳，方便开发人员去快速调查问题。
 Log4j 帮助我们实现上面的目标，当我们在使用seleniumwebdriver的时候，如果日志能够被灵活使用，它将是一个很强大的debug工具。
+在方法中使用日志输出:
+首先有一个问题，日志在什么地方输出，是我们执行一个步骤，就打印这个步骤的日志输出吗？显然这样可以实现，但是我们需要花大量精力去思考每次输出的内容。一般来说，我们都在方法里面实现日志输出，只要调用这个方法，就有响应的日志输出。
 
- 
-
-在方法中使用日志输出
-
- 
-
-​      首先有一个问题，日志在什么地方输出，是我们执行一个步骤，就打印这个步骤的日志输出吗？显然这样可以实现，但是我们需要花大量精力去思考每次输出的内容。一般来说，我们都在方法里面实现日志输出，只要调用这个方法，就有响应的日志输出。
-
- 
-
-如何实现
-
-1)下载log4j jar文件，下载地址（http://archive.apache.org/dist/logging/log4j/）
-
-2) 添加到当前项目的library（log4j-1.2.9.jar）
-
-3) 在当前java项目根目录下新建一个log4j.xml文件
-
-4) Log4j,xml内容如下
-
+## 如何实现
+### 添加 log4j jar包的依赖
+1. 在pom.xml 文件中添加依赖：
+```maven
+<!-- https://mvnrepository.com/artifact/log4j/log4j -->
+<dependency>
+ <groupId>log4j</groupId>
+ <artifactId>log4j</artifactId>
+ <version>1.2.17</version>
+</dependency>
 ```
+2. 更新项目的maven - 选择项目中的pom.xml文件右击，选择maven->reimport；
+3. 查看项目中的External libraries,如果有log4j文件，说明下载成功了。
+当然，也可以t通过下载加载log4j jar文件，操作如下：
+1. 下载log4j jar文件，下载地址（http://archive.apache.org/dist/logging/log4j/）;
+2. 添加到当前项目的library（log4j-1.2.9.jar）;
+
+### Log4j.xml文件
+在当前java项目根目录下新建一个log4j.xml文件;
+Log4j.xml内容如下:
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
  
 <!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
@@ -63,12 +62,14 @@ Log4j 帮助我们实现上面的目标，当我们在使用seleniumwebdriver的
  
 </log4j:configuration>
 ```
-注意这一行
-` <param name="Append" value="false" />`
-​       当前设置是，Log保存到本地文件，每次都清空之前的日志，然后写入本次运行测试产生的日志。如果改成true，就会在原来旧日志后边接着输出新日志。
+**PS：**
+`<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false">`,这里可能会报错：URI is not registered；解决方法[在这里](https://www.cnblogs.com/ttflove/p/6341469.html) ；
+`<param name="Append" value="false" />`，Append是设置Log保存到本地文件，false表示每次开始运行时都清空之前的日志，然后写入本次运行测试产生的日志。如果改成true，就会在原来旧日志后边接着输出新日志。
 
-新建一个静态Log输出方法，方便其他地方调用，在utility包下新建一个Log.java
-```
+### 添加 Log 工具类
+新建一个静态Log输出方法，方便其他地方调用，在utility包下新建一个Log.java。
+Log.java内容如下:
+```java
 package utility;
  
 import org.apache.log4j.Logger;
@@ -118,9 +119,13 @@ public class Log {
  
 }
 ```
-     接下来我们在ActionsKeywords.java和DriverScript.java 插入日志输出，然后运行main方法，看看日志文件输出效果。
 
-```
+## log类在代码中的使用
+接下来我们在ActionsKeywords.java和DriverScript.java 插入日志输出，然后运行main方法，看看日志文件输出效果。
+
+### 在 ActionsKeywords 中添加log
+在 ActionsKeywords 的方法调用日志输出方法，修改后 ActionsKeywords.java 内容如下:
+```java
 package config;
  
 import org.openqa.selenium.By;
@@ -175,8 +180,10 @@ public class ActionsKeywords {
     }
 }
 ```
-在main方法调用日志输出方法。
-```
+
+### 在 DriverScript 中添加log
+在main方法调用日志输出方法，修改后 DriverScript.java 内容如下:
+```java
 package executionEngine;
 import com.sun.xml.internal.bind.v2.runtime.reflect.opt.Const;
 import config.ActionsKeywords;
@@ -274,7 +281,8 @@ public class DriverScript {
  
 }
 ```
-运行main方法，会在当前项目根目录生成一个logfile.log文件，内容如下
+## 运行结果
+运行main方法，会在当前项目根目录生成一个logfile.log文件，内容如下：
 ```
 2018-02-08 10:44:29,179 INFO  [Log] ******************************************************* 
 2018-02-08 10:44:29,180 INFO  [Log] $$$$$$$$$          Login_01         $$$$$$$$$$ 
