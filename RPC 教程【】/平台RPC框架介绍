@@ -1,0 +1,204 @@
+# 平台RPC框架介绍
+
+由 Loen 创建， 最后一次修改 2016-02-24
+
+原文出处：<http://weibo.com/p/1001643875439147097368>
+作者：
+
+![img](https://7n.w3cschool.cn/attachments/image/cimg/2015-09-14_55f66a0c949fa.jpg)
+
+**课程大纲**
+
+- 一、RPC简介
+  - [1、什么是RPC？](https://www.w3cschool.cn/sina_boot_camp/b164xozt.html#1%E3%80%81%E4%BB%80%E4%B9%88%E6%98%AFrpc%EF%BC%9F)
+  - [2、RPC与HTTP、RMI等远程通信方式比较](https://www.w3cschool.cn/sina_boot_camp/b164xozt.html#2%E3%80%81rpc%E4%B8%8Ehttp%E3%80%81rmi%E7%AD%89%E8%BF%9C%E7%A8%8B%E9%80%9A%E4%BF%A1%E6%96%B9%E5%BC%8F%E6%AF%94%E8%BE%83)
+  - 二、Motan RPC服务框架
+    - [1、RPC服务框架](https://www.w3cschool.cn/sina_boot_camp/b164xozt.html#1%E3%80%81rpc%E6%9C%8D%E5%8A%A1%E6%A1%86%E6%9E%B6)
+    - [2、MotanRPC框架中的三个角色](https://www.w3cschool.cn/sina_boot_camp/b164xozt.html#2%E3%80%81motanrpc%E6%A1%86%E6%9E%B6%E4%B8%AD%E7%9A%84%E4%B8%89%E4%B8%AA%E8%A7%92%E8%89%B2)
+    - [3、Motan RPC调用流程](https://www.w3cschool.cn/sina_boot_camp/b164xozt.html#3%E3%80%81motan+rpc%E8%B0%83%E7%94%A8%E6%B5%81%E7%A8%8B)
+  - 三、Motan中各角色介绍
+    - [1、Registry](https://www.w3cschool.cn/sina_boot_camp/b164xozt.html#1%E3%80%81registry)
+    - [2、Motan Service](https://www.w3cschool.cn/sina_boot_camp/b164xozt.html#2%E3%80%81motan+service)
+    - [3、Motan Client](https://www.w3cschool.cn/sina_boot_camp/b164xozt.html#3%E3%80%81motan+client)
+  - 四、Motan实战
+    - [1、Motan RPC基本使用方式](https://www.w3cschool.cn/sina_boot_camp/b164xozt.html#1%E3%80%81motan+rpc%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8%E6%96%B9%E5%BC%8F)
+    - [2、使用Motan提供RPC服务](https://www.w3cschool.cn/sina_boot_camp/b164xozt.html#2%E3%80%81%E4%BD%BF%E7%94%A8motan%E6%8F%90%E4%BE%9Brpc%E6%9C%8D%E5%8A%A1)
+    - [3、使用Motan调用RPC服务](https://www.w3cschool.cn/sina_boot_camp/b164xozt.html#3%E3%80%81%E4%BD%BF%E7%94%A8motan%E8%B0%83%E7%94%A8rpc%E6%9C%8D%E5%8A%A1)
+  - [五、总结](https://www.w3cschool.cn/sina_boot_camp/b164xozt.html#%E4%BA%94%E3%80%81%E6%80%BB%E7%BB%93)
+  - [六、课后思考](https://www.w3cschool.cn/sina_boot_camp/b164xozt.html#%E5%85%AD%E3%80%81%E8%AF%BE%E5%90%8E%E6%80%9D%E8%80%83)
+
+## 一、RPC简介
+
+RPC协议具有语言无关、通信协议无关在大中型分布式系统中，远程服务调用是十分关键的环节。RPC由于具有语言无关、简单高效等特点，在远程服务调用中有着广泛应用。本文将简单介绍一下RPC的基本概念，以及微博平台RPC服务框架的基本原理和使用方式。
+
+### 1、什么是RPC？
+
+RPC（Remote Procedure Call）指远程过程调用，是一种通过网络调用远程过程（或方法）的协议。RPC是基于Client/Server模式，Client端携带必要参数调用Server端的方法，并获取Server端返回的方法执行结果。
+
+、高效可靠等特点，非常适合作为分布式计算、分布式服务等远程交互的基础协议。RPC协议一般包括协议消息处理、网络传输两个部分，一个简单的rpc调用过程如下图： 
+
+![img](https://7n.w3cschool.cn/attachments/image/cimg/2015-09-14_55f66a0d085ed.jpg)
+
+当Client调用远程的方法时，先将要调用的方法名、参数等信息按RPC协议转换为RPC消息，然后再通过某种传输协议（TCP、HTTP等）将RPC消息传输到Server端。Server端接到请求后将RPC消息按协议转换为调用请求，并执行方法，将执行后的结果按类似的过程返回给Client端，完成一次RPC调用。
+
+### 2、RPC与HTTP、RMI等远程通信方式比较
+
+1）、RMI与RPC：
+
+RMI（Remote Method Invocation）是指java语言中的远程方法调用，RMI中的每个方法都具有方法签名，RMI客户端和服务器端通过方法签名进行远程方法调用。RMI只能在java语言中使用，可以把RMI看作面向对象的java RPC。
+
+2）、HTTP与RPC
+
+HTTP（HyperText Transfer Protocol）是应用层通信协议，使用标准语义访问指定资源（图片、接口等），网络中的中转服务器能识别协议内容。HTTP协议是一种资源访问协议，通过HTTP协议也可以完成远程请求并返回请求结果。HTTP的优点是简单、易用，可理解性好、并且与语言无关；HTTP协议的缺点是协议头比较重，一般请求到具体服务器的链路较长（可能会有dns解析、nginx代理等）。
+
+相对于HTTP来说，通信层只是RPC协议的一部分，RPC可以使用TCP或者HTTP等作为通信协议。除了通信协议，RPC还包括请求序列化协议，一般RPC框架还会包括一些调度管理能力。RPC相对于HTTP的优点是能够提供调度、管理能力，使用RPC服务的自动化程度比较高，性能也十分优秀。缺点就是相对复杂，学习成本稍高。
+
+下面就以平台的RPC框架Motan为例，介绍一下RPC服务的基本实现及使用方式。
+
+## 二、Motan RPC服务框架
+
+### 1、RPC服务框架
+
+一般RPC协议中仅仅包含了client与server之间点对点的调用，在实际的使用当中，还需要考虑服务的发现与服务注销、提供服务的多台server的负载均衡、服务的高可用等等一系列的问题。
+
+目前业界比较成熟的RPC框架有阿里开源的Dubbo、Facebook开源的Thrift，以及Avro、Hetty、Grpc等等，其中Thrift、Avro、Hetty、Grpc等都是性能优秀的RPC框架，偏重于跨语言序列化传输、在序列化方式、协议扩展、同步异步调用等方面有各自不同的优点，但在RPC服务管理方面功能较少，在分布式服务应用时还需要进行一些辅助开发。Dubbo则是一个比较完备的服务治理框架，能够提供高性能、透明化的RPC调用，并且拥有强大的服务管理功能。Dubbo虽然功能强大，但是整个框架有些过重，应用起来略微复杂。
+
+考虑到微服务化、动态服务治理等需求，并结合自身业务高并发、服务性能、稳定性要求较高等特点，微博平台开发了自己的Motan RPC框架。Motan偏重于简洁实用的服务治理功能和优秀的RPC协议扩展能力，既可以提供高效的RPC远程调用，又能提供服务发现、服务高可用（High Available）、负载均衡、服务监控、管理等服务治理功能。通过SPI机制提供强大的扩展能力，可以支持不同的RPC协议、传输协议。Motan能够无缝支持Spring配置方式使用RPC服务，通过简单、灵活的配置就可以提供或使用RPC服务。通过使用Motan框架，可以十分方便的进行服务拆分、分布式服务部署。
+
+### 2、MotanRPC框架中的三个角色
+
+在Motan框架中，RPC服务调用是由三个角色的交互完成的。首先需要一个服务的提供方Service（也可以叫做Provider），Service对外提供各种可以远程调用的方法（Method）；另外一个角色叫Client（也可以叫做Referer或Consumer），Client需要使用Service提供的远程服务。如果仅有这两个角色，还不能实现自动化的RPC服务，还需要第三个角色－－注册中心Registry，Registry是用来提供服务发现功能的。
+
+当Service准备对外提供一个RPC服务时，首先需要跟Registry进行服务注册。当Client需要使用RPC服务时，则需要跟Registry订阅RPC服务，Registry会把对应服务信息给Client，并且在服务信息变更时，及时通知Client。Client根据Registry提供的服务信息，请求具体的一台能够提供指定RPC服务的服务器，完成远程调用。Service、Client、Registry这三个角色的交互如下图：
+
+![img](https://7n.w3cschool.cn/attachments/image/cimg/2015-09-14_55f66a0da8d8d.jpg)
+
+例如，Server1这台服务器跟Registry注册了“S”这个RPC服务，Registry就保存了“Server1提供S服务”这样一条信息。Server2也可以提供“S”服务，也向Register注册了“S”服务。这时Register中的信息变成了“Server1和Server2都提供S服务”。当Client1需要使用S服务了，它向Register订阅了S服务，Register告诉Client1:“Server1和Server2都提供S服务”，Client1根据某个策略选择了调用Server1的S服务完成了RPC调用。后来，Server1不在提供S服务了，Register把这个变化告诉给了Client1，Client1就不再使用Server1的S服务，而是使用Server2的S服务完成RPC调用。
+
+java语言在使用Motan时，Client与Service通过java接口类来进行RPC调用。例如Service端实现了com.weibo.demo.TestService接口,  Client可以通过Motan来使用这个接口类中声明的方法。
+
+### 3、Motan RPC调用流程
+
+Motan框架中Registry、Service、Client三个角色包含的模块以及各模块的交互流程如下：
+
+![img](https://7n.w3cschool.cn/attachments/image/cimg/2015-09-14_55f66a12da23c.jpg)
+
+​     其中register模块用来和注册中心进行交互，包括注册服务、订阅服务、服务变更通知、服务心跳发送等功能；transport模块用来进行远程通信；serialize模块将rpc请求中的参数、结果等对象进行序列化与反序列化，即进行对象与字节流的互相转换；protocol模块用来进行RPC服务的描述和RPC服务的配置管理；cluster模块包含一组可以提供RPC服务的具体Server，实际请求时会根据不同的HA与负载均衡策略在一组Server中选择一个可用的发起远程调用。各模块的详细情况将在下一节进行介绍。
+
+## 三、Motan中各角色介绍
+
+### 1、Registry
+
+Motan可以支持多种Registry模块，例如zookeeper、consul等都可以作为注册中心使用，默认的Registry模块使用平台开发的Vintage配置服务。Vintage是一个基于redis的轻量级KV存储系统，能够提供命名空间服务、服务注册、服务订阅等功能。Vintage中的服务是以分组（Group）保存的，一般一个分组以机房＋业务线进行命名，如yf-user-rpc。一个分组中包含若干的Service，一个Service即表示java中的一个接口类，能够提供其中的多个方法。
+
+每个Service下有一组能够提供对应服务的Server，每个Server在向Registry注册后，会定时发送心跳，向Registry汇报健康状态。Server通过心跳开关的开启与关闭，可以控制是否对外提供RPC服务。
+
+Client端订阅Service后，会从Registry中得到能够提供对应Service的一组Server，Client把这一组Server看作一个提供服务的cluster。当cluster中的Server发生变更时，Client端的register模块会通知Client进行更新。
+
+### 2、Motan Service
+
+Service端在启动RPC服务时的主要步骤如下：
+
+1）、首先通过配置文件生成对应的protocol信息，包括对外提供服务的端口、服务名称、工作线程数等等
+
+2）、向Vintage(即Registry)注册RPC服务，包括提供服务的protocol信息、Server的ip、提供服务的端口等。
+
+3）、打开并监听声明的RPC服务端口。此时服务处于已经注册，但未正式提供服务的状态。
+
+4）、服务验证通过后，打开心跳开关，Server会定时向Vintage注册中心汇报健康状态，此时就能正式对外提供RPC服务了。
+
+在Service端提供服务后，由transport模块负责监听rpc服务的端口，并接收client端发送过来的RPC请求。一次完整的Service端处理RPC请求流程如下：
+
+1）、监听RPC服务端口，由transport模块接收RPC request，transport模块默认是使用Netty nio通过TCP长链接方式与Client进行通信。transport模块收到请求后将请求转交给serialize模块进行解析。
+
+2）、serialize模块默认使用Hession对RPC请求进行解码，将请求由字节流转化为java对象。
+
+3）、fliter模块会根据请求的参数做一下过滤策略，例如调用统计、日志、请求限制等。
+
+4）、protocol负责解析通过filter后的请求对象，根据协议分析出请求想要调用的方法及参数，然后找到提供对应服务的具体对象。
+
+5）、具体服务对象通过反射机制完成服务中方法的调用并返回处理结果。
+
+6）、返回结果通过filter后，在通过serialize模块将结果对象转换为字节流，由transport模块发送给Client端，完成一次RPC请求的处理。
+
+### 3、Motan Client
+
+Motan Client端的初始化流程如下：
+
+1）、与Service端一样，首先会通过配置文件生成对应的protocol信息。
+
+2）、向Registry订阅所需的RPC服务，获取提供对应服务的全部Server，这一组Server和HA策略模块、负载均衡模块一起组成了一个cluster。
+
+3）、对每个Server建立初始链接。
+
+在Client完成了初始化流程后，在调用RPC服务时，会有一个选择Server的过程，当Server选定后的处理过程跟Server端类似。Client调用RPC的流程如下图：
+
+![img](https://7n.w3cschool.cn/attachments/image/cimg/2015-09-14_55f66a131980c.jpg)
+
+1）、当进行RPC请求时，会首先通过HA模块选择一种高可用策略，例如快速失败、失败选择其他Server重试等策略，各种策略的参数可以根据需要进行设置。
+
+2）、然后会通过负载均衡模块从一组提供服务的Server中选择一个可用的Server。负载均衡的策略包括一致性哈希、轮询、并发度、权重等等。
+
+3）、选出Server后，就对这个Server进行RPC请求，图中的netty client是用来进行点对点的RPC请求，包含了protocol、serialize、transport模块，请求的处理流程与Service端的流程基本一致，也是通过serialize模块转换请求对象，transport模块来进行通信。
+
+## 四、Motan实战
+
+### 1、Motan RPC基本使用方式
+
+Motan RPC是按接口提供和调用服务，以java服务为例，一般由服务提供方声明服务的接口类，并同时提供一个默认的RPC Client调用配置，然后将接口类与默认的Client配置xml文件一起封装成jar包。服务提供方和服务使用方共同引入这个jar包，服务提供方对接口类进行实现并对外提供RPC服务；服务使用方加载默认Client端配置文件，直接使用RPC服务。
+
+除了xml配置方式外，Motan也支持API方式，因为xml配置方式比较灵活，并且与spring配置加载完全兼容，一般推荐使用xml方式配置Motan服务。下面就以xml配置方式分别介绍使用Motan提供、调用RPC服务的具体步骤。
+
+### 2、使用Motan提供RPC服务
+
+使用Motan提供RPC服务大致需要如下几步：
+
+1）、声明RPC接口类，并实现该接口类。
+
+2）、引入Motan相关jar包。
+
+3）、配置服务端xml配置。
+
+4）、部署、启动服务，验证服务。
+
+5）、打开心跳开关，正式提供RPC服务
+
+一份基础的Service端xml配置如下：  
+
+![img](https://7n.w3cschool.cn/attachments/image/cimg/2015-09-14_55f66a1343ad6.jpg)
+
+Motan使用了自定义的xml schema，在xml中需要引入对应的schema。Motan的xml配置中包括registry、protocol、service、referer几个部分，其中registry与protocol是Service端与Client端都要使用的。
+
+registry配置了注册中心相关的属性，包括注册中心ip、prot、超时等；protocol配置了RPC服务相关的属性，如工作线程数、请求超时、消息长度等；basicService配置了不同服务的公共属性，当一个工程对外提供多个RPC Service的时候，可以把这些Service的公共属性配置在basicService中；service则配置了具体的服务属性，包括对外提供服务的端口、对外提供服务的具体服务实现类bean等。
+
+除了这些基础属性外，每个配置标签下还支持大量的高级属性，如访问控制、filter策略等等，这里就不在一一讲解了。
+
+### 3、使用Motan调用RPC服务
+
+使用Motan RPC服务就相对简单一些，一般服务提供方已经给出了默认的client配置，只需要在项目中加载xml配置，就可以像使用本地的spring bean一样直接使用RPC服务了。步骤如下：
+
+1）、引入Motan相关jar包及RPC服务接口jar包。
+
+2）、加载RPC接口jar包中的默认xml配置
+
+3）、直接使用xml中声明的refer bean。
+
+Client端基本配置如下：
+
+![img](https://7n.w3cschool.cn/attachments/image/cimg/2015-09-14_55f66a13b73b1.jpg)
+
+其中registry、protocol部分与Service端的配置一致。basicRefer配置是多个RPC服务时的公共配置，例如请求超时控制、服务端异常是否抛出等；referer表示对服务实现类的远程引用，配置了使用的服务接口类等属性。
+
+如果想使用自定义的Client端配置，也可以按schema中的属性单独配置xml，加载后就可以生效。另外在Client端还可以进行一些更细化的配置包括对一个接口类中不同方法的详细配置，可以根据具体的业务场景进行配置。
+
+## 五、总结
+
+​     RPC服务在分布式系统中有着越来越广泛的应用，本文简单介绍了RPC的基本概念、平台RPC框架Motan的基本结构、Motan中的三个角色的交互流程以及基本的使用方式。通过简单配置就能够使用RPC服务了。当然，如果需要对RPC服务进行更精细的控制，可以通过schema中的特定属性进行配置或者使用不同扩展模块来实现。
+
+## 六、课后思考
+
+1、远程服务的不同调用方式、RPC与HTTP的区别以及适用的场景。
+
+2、Motan RPC框架中的三个角色及各角色之间的交互过程。
+
+3、RPC请求的调用过程。
