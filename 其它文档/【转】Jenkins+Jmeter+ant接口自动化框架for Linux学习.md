@@ -102,8 +102,8 @@ apache-tomcat-8.5.31
 
 标红部分可根据自己的配置进行修改。
 
- 
 
+```xml
 <?xml version="1.0" encoding="UTF-8"?>  
 
 <project name="ant-jmeter-test" default="run" basedir=".">  
@@ -115,9 +115,9 @@ apache-tomcat-8.5.31
     <!-- 需要改成自己本地的 Jmeter 目录-->    
     <property name="jmeter.home" value="/opt/apache-jmeter-4.0" />  
     <!-- jmeter生成jtl格式的结果报告的路径-->   
-    <property name="jmeter.result.jtl.dir" value="/opt/apache-jmeter-4.0/report\jtl" />  
+    <property name="jmeter.result.jtl.dir" value="/opt/apache-jmeter-4.0/report/jtl" />  
     <!-- jmeter生成html格式的结果报告的路径-->  
-    <property name="jmeter.result.html.dir" value="/opt/apache-jmeter-4.0/report\html" />  
+    <property name="jmeter.result.html.dir" value="/opt/apache-jmeter-4.0/report/html" />  
     <!-- Name of test (without .jmx) -->  
     <property name="test" value="Test"/>  
     <!-- 生成的报告的前缀-->    
@@ -162,6 +162,7 @@ apache-tomcat-8.5.31
     </target>  
       
 </project>
+```
 
 ## 3.3  配置jmeter.properties文档
 
