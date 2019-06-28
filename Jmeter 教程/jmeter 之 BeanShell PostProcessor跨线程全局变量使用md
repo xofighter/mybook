@@ -1,0 +1,43 @@
+# [jmeter 之 BeanShell PostProcessor跨线程全局变量使用](https://www.cnblogs.com/insane-Mr-Li/p/10146229.html)
+
+
+
+ BeanShell PostProcessor是用户对一些变量的操作，操作方法很灵活，大概原理是通过parameters传回来对象，然后在script中对对象进行操作
+
+场景：从登陆接口中获取token，设置成全局变量让HTTP Header Manager能获取到，让其他所有线程都能拿到这个参数
+
+1.在Test Plan下设置HTTP Header Manager，以及需要用的Header内容
+
+![img](https://img2018.cnblogs.com/blog/1401386/201812/1401386-20181219211239136-2050977276.png)
+
+2.建立一个线程放置登陆接口，并提取token设置成全局变量
+
+提取token：
+
+![img](https://img2018.cnblogs.com/blog/1401386/201812/1401386-20181219211354600-999383492.png)
+
+设置全局变量：把上一步提取的token通过Parametres：把需要操作的参数传递给Bean Shell PostProcessor。
+
+![img](https://img2018.cnblogs.com/blog/1401386/201812/1401386-20181219211457705-2080822738.png)
+
+- 前面提取出来的token的值，就把参数token写入Script：  string Token=bsh.args[0];  把Bean Shell PostProcessor接收到的参数值，赋值给某参数。0是第一个值。${__setProperty(requestToken,${Token},)};        调用函数__setProperty，把Bean Shell PostProcessor中的参数Token的值赋值给requestToken，并设置requestToken为jmeter内置属性。
+
+用函数助手获取__setProperty：
+
+![img](https://img2018.cnblogs.com/blog/1401386/201812/1401386-20181219211957285-321356286.png)
+
+[函数传送门](https://www.cnblogs.com/insane-Mr-Li/p/10145617.html)
+
+再用_P函数来引用：
+
+[函数传送门](https://www.cnblogs.com/insane-Mr-Li/p/10145617.html)
+
+![img](https://img2018.cnblogs.com/blog/1401386/201812/1401386-20181219212657427-658307910.png)
+
+![img](https://img2018.cnblogs.com/blog/1401386/201812/1401386-20181219212715584-1810893356.png)
+
+这次脚本思路：
+
+登陆只登陆一次获取token后然后对某个接口进行压测，对接口进行压测就要设置线程，频繁的多余掉去登陆接口会造成资源浪费
+
+![img](https://img2018.cnblogs.com/blog/1401386/201812/1401386-20181219212921105-975829353.png)
