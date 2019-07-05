@@ -35,17 +35,19 @@ Jmeter连接数据库需要配置两个元件：JDBC Connection Configuration和
 
    右键线程组->添加->配置元件->JDBC Connection Configuration
 
-   ![img](https://images2015.cnblogs.com/blog/1139190/201707/1139190-20170706154202394-726384234.png)
+   ![1561974659938](C:\Users\xu_bob\AppData\Roaming\Typora\typora-user-images\1561974659938.png)
 
 2. JDBC Connection Configuration 界面控件介绍
 
-   ![1561607735828](C:\Users\xu_bob\AppData\Roaming\Typora\typora-user-images\1561607735828.png)
+   ![1561974764647](C:\Users\xu_bob\AppData\Roaming\Typora\typora-user-images\1561974764647.png)
 
 - Varible Name: 这个是变量的名字，具有唯一性，不能重复
 
 - Database URL: jdbc:mysql://数据库地址:数据库端口号/数据库名 ；如果要执行多条SQL语句，后面还要添加“?allowMultiQueries=true”
 
-  ![1561608001950](C:\Users\xu_bob\AppData\Roaming\Typora\typora-user-images\1561608001950.png)
+- ![1561975023063](C:\Users\xu_bob\AppData\Roaming\Typora\typora-user-images\1561975023063.png)
+
+  
 
 - JDBC Driver Class ：org.gjt.mm.mysql.Driver  或者 com.mysql.jdbc.Driver   这是固定值
 
@@ -59,30 +61,53 @@ Jmeter连接数据库需要配置两个元件：JDBC Connection Configuration和
 
 3. 配置 JDBC Connection Configuration
 
-以下画圈的地方均需填写，其他内容为默认值即可。
+上图画圈的地方均需填写，其他内容为默认值即可。
 
-![img](https://images2015.cnblogs.com/blog/1139190/201707/1139190-20170706154254909-1591366443.png)
+
 
 #### JDBC Request 配置
 1. 添加 JDBC Request
 
 给线程组添加Sampler>JDBC Request。
 
-![img](https://img-blog.csdn.net/20180507183600177?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2dsb25nbGps/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70)
+![1561975154983](C:\Users\xu_bob\AppData\Roaming\Typora\typora-user-images\1561975154983.png)
 
 2. JDBC Request 界面介绍
 
-![img](https://img-blog.csdn.net/2018032110241583?watermark/2/text/Ly9ibG9nLmNzZG4ubmV0L0Zsb3JhQ0hZ/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70)
+![1561975248072](C:\Users\xu_bob\AppData\Roaming\Typora\typora-user-images\1561975248072.png)
 
 - Variable Name： 
-数据库连接池的名字，需要与上面配置的JDBC Connection Configuration中Variable Name Bound Pool的Variable Name相同 
+  数据库连接池的名字，需要与上面配置的JDBC Connection Configuration中Variable Name Bound Pool的Variable Name相同 
+
+- Query Tpye：Select 选择Select Statement；Insert, Update, Delete 选择 Update Statement。
+
+  ![1561975662788](C:\Users\xu_bob\AppData\Roaming\Typora\typora-user-images\1561975662788.png)
+
 - Query：填写的sql语句未尾不要加“;” 
+
 - Parameter valus：参数值 
+
 - Parameter types：参数类型，可参考：Javadoc for java.sql.Types 
+
 - Variable names：保存sql语句返回结果的变量名 
+
 - Result variable name：创建一个对象变量，保存所有返回的结果 
+
 - Query timeout：查询超时时间 
+
 - Handle result set：定义如何处理由callable statements语句返回的结果
+
+| 属性                      | 描述 | 备注                                                         |
+| ------------------------- | ---- | ------------------------------------------------------------ |
+| Select Statement          |      | Select 选择Select Statement。                                |
+| Update Statement          |      | Insert, Update, Delete 选择 Update Statement.                |
+| Callable Statement        |      |                                                              |
+| Prepared Select Statement |      | 如果使用预编译（语句中带问号）必须选择 Prepared Select(Update) Statement(建议使用Prepared) |
+| Prepared Update Statement |      | 如果使用预编译（语句中带问号）必须选择 Prepared Update(Select) Statement(建议使用Prepared) |
+| Commit                    |      | 其他类型不算常用，需要的时候找下资料吧                       |
+| Rollback                  |      |                                                              |
+| Autocommit(false)         |      |                                                              |
+|                           |      |                                                              |
 
 
 
@@ -90,7 +115,7 @@ Jmeter连接数据库需要配置两个元件：JDBC Connection Configuration和
 | 属性 | 描述 | 备注 |
 | -- | -- | -- |
 | Variable Name | 选择使用哪个配置，值与JDBC Connection Configuration 的Variable Name相同	| 不能为空。JDBC Connection Configuration 可以配置多个，这里只要选择自己想用的那个即可 |
-| Query Type    |     Select Statement  Update Statement  Callable Statement Prepared Select Statement   Prepared Update Statement   Commit  Rollback   Autocommit(false)    Autocommit(true)    Edit    |   Select 选择Select Statement。Insert, Update, Delete 选择 Update Statement.2. 如果使用预编译（语句中带问号）必须选择 Prepared Select(Update) Statement(建议使用Prepared)3. 其他类型不算常用，需要的时候找下资料吧 |
+| Query Type    | 【Select Statement】，【Update Statement】，  【Callable Statement】， 【Prepared Select Statement】，   【Prepared Update Statement】，   【Commit】，  【Rollback】，  【Autocommit(false)】，【Autocommit(true) 】，【Edit】  |   Select 选择Select Statement。Insert, Update, Delete 选择 Update Statement.2. 如果使用预编译（语句中带问号）必须选择 Prepared Select(Update) Statement(建议使用Prepared)3. 其他类型不算常用，需要的时候找下资料吧 |
 | SQL Query | Sql语句 | 不能为空。语句结束建议不要带上分号（虽然有分号一般也不会有问题） |
 | Parameter values | 参数值。多个值时使用逗号分割。数量必须与sql语句中的参数个数相同 | 当选择Prepared或Callable 时不能为空 |
 | Parameter types | 参数类型。多个值时使用逗号分割。数量必须与参数值相同。 | 使用不同的驱动，参数类型可能会有不同。常见的比如varchar, int…, 支持大小写 |
@@ -112,8 +137,6 @@ Jmeter连接数据库需要配置两个元件：JDBC Connection Configuration和
 
 1、          创建一个存储过程，语句如下：
 
-[![复制代码](https://common.cnblogs.com/images/copycode.gif)](javascript:void(0);)
-
 ```
 DELIMITER $$;
 DROP PROCEDURE IF EXISTS test;
@@ -128,8 +151,6 @@ $$;
 DELIMITER ;;
 Call test;  //调用存储过程
 ```
-
-[![复制代码](https://common.cnblogs.com/images/copycode.gif)](javascript:void(0);)
 
 注意：测试的要先切换到相应的数据库下才能创建存储过程成功
 
