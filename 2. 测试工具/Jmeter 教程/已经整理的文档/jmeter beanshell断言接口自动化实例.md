@@ -24,7 +24,7 @@
 
 ​                                                                                                                                               
 
-1.首先去Jmeter官网（http://jmeter.apache.org/download_jmeter.cgi）下载安装包，最新版为4.0，本篇使用的是3.0
+1.首先去Jmeter官网（http://jmeter.apache.org/download_jmeter.cgi）下载安装包，最新版为5.1.1，本篇使用的是3.0
 
 2.将apache-jmeter-3.0.zip解压至任意位置。
 

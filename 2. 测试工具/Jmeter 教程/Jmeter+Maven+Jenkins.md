@@ -1,0 +1,462 @@
+# Jmeter+Maven+Jenkins的搭建笔记
+
+
+
+关于Jmeter的持续集成，首先先谈谈Jmeter+Maven的集成。
+
+1、使用idea或者eclipse创建一个maven项目
+
+2、在test下创建一个Jmeter目录
+
+ ![img](https://img2018.cnblogs.com/blog/1104043/201812/1104043-20181215140534360-170750306.png)
+
+3、将jmeter脚本放入jmeter这个目录下
+
+4、把本地的jmeter属性文件放入到jmeter目录下，这里需注意，需要修改一些属性
+
+（1）jmeter.save.saveservice.output_format=xml
+
+5、在test文件下创建一个resources文件，并将它在项目属性中设置为Test resources，在将xsl报告放入进去
+
+![img](https://img2018.cnblogs.com/blog/1104043/201812/1104043-20181215141414766-1195500976.png)
+
+6、设置Maven的pom文件
+
+```
+<!--设置报告生成的路径--><properties>    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>    <jmeter.result.jtl.dir>${project.build.directory}\jmeter\results</jmeter.result.jtl.dir>    <jmeter.result.html.dir>${project.build.directory}\jmeter\html</jmeter.result.html.dir></properties><build>    <plugins>        <plugin>            <!-- 核心插件，用来执行jmx脚本，版本号对应的jmeter版本可在此地址查询 https://github.com/jmeter-maven-plugin/jmeter-maven-plugin/blob/master/CHANGELOG.md-->            <groupId>com.lazerycode.jmeter</groupId>            <artifactId>jmeter-maven-plugin</artifactId>            <version>2.2.0</version>            <configuration>                            <!-- 设置jmeter生成结果文件格式-->                <resultsFileFormat>xml</resultsFileFormat>                <!-- 设置忽略失败是否停止运行-->                <ignoreResultFailures>true</ignoreResultFailures>                <!--设置结果是否有时间戳-->                <testResultsTimestamp>false</testResultsTimestamp>                <testFilesIncluded>                    <!-- //指定运行的jmeter脚本 -->                    <jMeterTestFile>youdao.jmx</jMeterTestFile>                </testFilesIncluded>                <!-- 指定jtl生成目录 -->                <resultsDirectory>${jmeter.result.jtl.dir}</resultsDirectory>            </configuration>            <executions>                <execution>                    <id>jmeter-tests</id>                    <phase>verify</phase>                    <!--脚本所在的文件夹 -->                    <goals>                        <goal>jmeter</goal>                    </goals>                </execution>            </executions>        </plugin>        <plugin>            <!--根据xsl模版把jtl文件转换成html-->            <groupId>org.codehaus.mojo</groupId>            <artifactId>xml-maven-plugin</artifactId>            <version>1.0-beta-3</version>            <executions>                <execution>                    <phase>verify</phase>                    <goals>                        <goal>transform</goal>                    </goals>                </execution>            </executions>            <configuration>                <transformationSets>                    <transformationSet>                        <dir>${jmeter.result.jtl.dir}</dir>                        <stylesheet>src\test\resources\jmeter.results.shanhe.me.xsl</stylesheet>                        <outputDir>${jmeter.result.html.dir}</outputDir>                        <!-- 把jtl格式转传承html -->                        <fileMappers>                            <fileMapper                                    implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">                                <targetExtension>html</targetExtension>                            </fileMapper>                        </fileMappers>                    </transformationSet>                </transformationSets>            </configuration>            <!-- using XSLT 2.0 -->            <dependencies>                <dependency>                    <groupId>net.sf.saxon</groupId>                    <artifactId>saxon</artifactId>                    <version>8.7</version>                </dependency>            </dependencies>        </plugin>    </plugins></build>备注：这里遇到过几个问题1、如果jmeter4.0版本是无法转换HTML报告的，使用jmeter-maven-plugin插件无法修改jmeter的属性文件，目前还没有找到解决办法，所以我使用的是3.3版本
+2、如果提示xsl文件未找到，那就是找不到启动的脚本,需查看这里如果运行的话，运行的是jmeter目录下的youdao.jmx文件7、idea中运行maven，找到顶部的运行配置
+```
+
+点击+号找到maven后添加，在Command line：下输入verify保存即可
+
+![img](https://img2018.cnblogs.com/blog/1104043/201812/1104043-20181215144427145-1612800252.png)
+
+ 
+
+```
+8、点击运行，会生成一个target文件，运行后的html结果在此目录下，此目录是可以自己在pom文件里添加的9、结果展示，此报告也可以二次重写
+```
+
+ 
+
+```
+ 
+```
+---------------
+
+# jmeter+maven+Jenkins 搭建jmeter+maven环境
+
+2019年07月10日 14:06:47  更多
+
+
+
+1、新建maven项目，参考[新建maven项目](https://mp.csdn.net/postedit/94458250)
+
+2、创建项目结构
+
+![img](https://img-blog.csdnimg.cn/20190710140145410.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0xlYWgwMTA1,size_16,color_FFFFFF,t_70)
+
+![img](https://img-blog.csdnimg.cn/20190710140347761.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0xlYWgwMTA1,size_16,color_FFFFFF,t_70)
+
+3、在pom.xml中配置相应插件
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+ 
+  <groupId>lixh</groupId>
+  <artifactId>JmterTest</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>jar</packaging>
+ 
+  <name>JmterTest</name>
+  <url>http://maven.apache.org</url>
+  <properties>
+    <!-- 文件拷贝时的编码 -->
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <!-- 编译时的编码 -->
+    <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
+ 
+    <jmeter.result.jtl.dir>${project.build.directory}\jmeter\results</jmeter.result.jtl.dir>
+    <jmeter.result.html.dir>${project.build.directory}\jmeter\html</jmeter.result.html.dir>
+    <!--<jmeter.result.resource.dir>${project.build.directory}\src\test\jmeter\html1</jmeter.result.resource.dir>-->
+    <!--<jmeter.result.html2.dir>${project.build.directory}\src\test\jmeter\html2</jmeter.result.html2.dir>-->
+    <ReportName>TestReport</ReportName>
+  </properties>
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+      <version>3.0-alpha-1</version>
+    </dependency>
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <version>5.1.45</version>
+    </dependency>
+    <dependency>
+      <groupId>com.googlecode.json-simple</groupId>
+      <artifactId>json-simple</artifactId>
+      <version>1.1.1</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/com.alibaba/fastjson -->
+    <dependency>
+      <groupId>com.alibaba</groupId>
+      <artifactId>fastjson</artifactId>
+      <version>1.2.58</version>
+    </dependency>
+ 
+ 
+    <!--此处functions、json、postgresql为自己引入的jar包 -->
+    <!--
+    <dependency>
+        <groupId>com.functions.jmeter</groupId>
+        <artifactId>functions</artifactId>
+        <version>1.0.2</version>
+    </dependency>
+    <dependency>
+        <groupId>com.json.jmeter</groupId>
+        <artifactId>json</artifactId>
+        <version>1.0.2</version>
+    </dependency>
+    <dependency>
+      <groupId>com.postgresql.jdbc</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>1.0.2</version>
+    </dependency>
+     -->
+  </dependencies>
+ 
+  <build>
+    <finalName>AutoTest</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.0.2</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <artifactId>mysql-connector-java</artifactId>
+          <artifactId>json-simple</artifactId>
+          <artifactId>fastjson</artifactId>
+          <outputDirectory>${basedir}/src/test/resources/lib</outputDirectory>
+        </configuration>
+      </plugin>
+ 
+      <plugin>
+        <groupId>com.lazerycode.jmeter</groupId>
+        <artifactId>jmeter-maven-plugin</artifactId>
+        <version>2.9.0</version>
+        <configuration>
+          <!--如果结果文件格式为CSV，则JMeter仅支持生成报告。<generateReports>true</generateReports>因此，
+          即使您已将结果文件格式显式设置为XML格式，启用也会导致结果文件格式自动更改为CSV 格式！-->
+          <!--JMeter能够创建.jtl（XML格式）测试结果和csv测试结果。
+          默认情况下，此插件使用自2.6.0版以来的.csv格式。如果您愿意，可以将其切换为xml格式。-->
+          <resultsFileFormat>xml</resultsFileFormat>
+          <!--设置告诉插件忽略失败-->
+          <ignoreResultFailures>true</ignoreResultFailures>
+          <!--插件会为其生成的每个结果文件添加时间戳。如果您不想添加时间戳，
+          可以通过将<testResultsTimestamp>配置设置为false 来禁用此行为-->
+          <testResultsTimestamp>false</testResultsTimestamp>
+          <!--指定日志级别-->
+          <overrideRootLogLevel>debug</overrideRootLogLevel>
+          <testFilesIncluded>
+            <!-- //指定运行的jmeter脚本 -->
+            <!--<jMeterTestFile>check.jmx</jMeterTestFile>-->
+            <excludeJMeterTestFile>*.jmx</excludeJMeterTestFile>
+          </testFilesIncluded>
+        </configuration>
+        <executions>
+          <execution>
+            <id>jmeter-tests</id>
+            <goals>
+              <goal>jmeter</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+ 
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.0.2</version>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${jmeter.result.html.dir}</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${basedir}/src/test/resources</directory>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>xml-maven-plugin</artifactId>
+        <version>1.0.1</version>
+        <executions>
+          <execution>
+            <phase>verify</phase>
+            <goals>
+              <goal>transform</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <transformationSets>
+            <transformationSet>
+              <dir>${jmeter.result.jtl.dir}</dir>
+              <stylesheet>src\test\resources\jmeter-results-detail-report_21.xsl</stylesheet>
+              <outputDir>${jmeter.result.html.dir}</outputDir>
+              <fileMappers>
+                <fileMapper
+                        implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
+                  <targetExtension>html</targetExtension>
+                </fileMapper>
+              </fileMappers>
+            </transformationSet>
+          </transformationSets>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>net.sf.saxon</groupId>
+            <artifactId>saxon</artifactId>
+            <version>8.7</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+    </plugins>
+  </build>
+</project>
+```
+
+ 
+
+ 4、运行
+
+![img](https://img-blog.csdnimg.cn/20190710140521989.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0xlYWgwMTA1,size_16,color_FFFFFF,t_70)
+
+5、clean
+
+![img](https://img-blog.csdnimg.cn/20190710140556109.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0xlYWgwMTA1,size_16,color_FFFFFF,t_70)
+
+
+
+------------------------
+
+# 基于Jmeter+Maven+Jenkins持续集成接口测试框架
+
+2016年12月18日 13:13:54 [PY不误正业](https://me.csdn.net/qingchunjun) 阅读数 9881
+
+
+
+ 版权声明：本文为博主原创文章，未经博主允许不得转载。 https://blog.csdn.net/qingchunjun/article/details/53572185
+
+# 基于Jmeter+Maven+Jenkins持续集成接口测试框架
+
+
+
+- 基于JmeterMavenJenkins持续集成接口测试框架
+  - [前言](https://blog.csdn.net/qingchunjun/article/details/53572185#前言)
+  - [框架组成简介](https://blog.csdn.net/qingchunjun/article/details/53572185#框架组成简介)
+  - [框架选型特点](https://blog.csdn.net/qingchunjun/article/details/53572185#框架选型特点)
+  - [遇到主要的坑及要点](https://blog.csdn.net/qingchunjun/article/details/53572185#遇到主要的坑及要点)
+  - [后期可能的扩展](https://blog.csdn.net/qingchunjun/article/details/53572185#后期可能的扩展)
+
+
+
+## 前言
+
+前段时间公司正好准备开始进行接口测试及接口监控方面的工作，为了使得接口测试及接口功能监控，所以我根据以往对Jmeter的使用经验，设计了一套最简单的Jmeter持续集成接口测试框架。虽然网上这块的资料也不少，但在做的过程中也遇到不少的坑，写作本文主要的目的是为了记录，但鉴于目前网上能找到的相关资料都写得比较杂乱，所以本着开源共享的精神，也一并分享于此，希望更多人能够受益，大家一起进步。
+
+本文将由以下几个部分组成：
+
+- **框架组成简介**
+- **框架选型特点**
+- **遇到主要的坑**
+- **后期可能的扩展**
+
+------
+
+## 框架组成简介
+
+废话不多说，首先上一张框架架构示意图，简单明了，然后再来分别解释各个部分的组成和具体操作步骤。由于时间有限，来不及自己做图，直接引用一下网上现成的图片。：）
+
+![这里写图片描述](https://img-blog.csdn.net/20161211113146501?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcWluZ2NodW5qdW4=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+
+
+（图片引用自http://www.cnblogs.com/victorcai0922/archive/2012/06/20/2555502.html）
+
+
+
+由上图可知，该框架主要由三个部分组成：Jmeter、Jenkins和Git，但其实还有一个非常重要的角色：Maven，所以我们总共应该会用到四个工具。作为框架的设计者，我们除了要实现框架外，更应该知道每个部分的作用，接下来分别看看：
+
+** Jmeter作为执行者的角色，每次负责执行具体的接口/性能测试脚本，并得到结果，生成报表。 
+** Maven和Git是作为管理者角色，前者主要负责项目的依赖管理，而后者主要负责项目的代码管理。 
+** Jenkins作为调度者，主要根据我们设置的build触发条件和事件调用jmeter进行测试
+
+## 框架选型特点
+
+市面上能达到我们目的的工具和框架很多，为什么要这样选型？这里简单地说明一下。我是开源爱好者，开源的好处自不必多说，所以一般只要有开源工具代替商业工具的，我都会选择开源工具实现。对于本框架来说，这四个工具都是开源免费，并且经过长时间的使用已经可谓非常成熟，所以更是不二选择。
+
+首先，说说接口测试工具的选择。接口测试可选择的面也非常广，常见的有soupUI、httpclient等，甚至可以自己用jave或python写工具来实现。但选择Jmeter而不是这些接口工具的原因是，通常接口测试与性能测试是相通的，如果我们在写好接口测试脚本后，在后面的性能测试过程中能完全复用现成的这些测试脚本，那么就大大提高了我们的脚本复用率，减少了很多重复的工作量，也使得框架的扩展性大大增强。Jmeter则是非常好的一个选择，它不但可以完成接口测试，做性能测试也是非常专业的，各种插件应有尽有，实在不行还可以自己写plugin，真是爽得不要不要的。
+
+其次，对于项目管理工具而言，很多人其实是用Ant在结合jmeter使用。Ant和Maven同为软件构建工具，但Maven的定位是软件项目管理和理解工具，所以Maven除了具备Ant的功能外，还增加了以下主要的功能：
+
+1）使用Project Object Model来对软件项目管理； 
+2）内置了更多的隐式规则，使得构建文件更加简单； 
+3）内置依赖管理和Repository来实现依赖的管理和统一存储，不管项目更换到了任何主机上，都不用关心依赖文件，随时可以更新和配置； 
+4）内置了软件构建的生命周期；
+
+另外，Ant本身build.xml文件的规则也是比较繁杂的，而基于Project Object Model的pom.xml文件则相对友好得多。
+
+第三，对于基于git的代码管理，就不多了，自己建立一个github项目，随时随地都可以通过git终端拉取，非常方便。
+
+第四，Jenkins对于持续集成的重要性就不言而喻了，并且方便测试代码与开发代码之间的集成和验证。
+
+## 遇到主要的坑及要点
+
+接下来记录下在框架实施过程中遇到的主要的坑以及一些比较重要的地方。
+
+一、Jmeter
+
+Jmeter部分在该框架中与正常普通使用无异，不再累述。
+
+二、Maven
+
+在搭建本框架时，在Maven部分遇到的主要问题总结如下：
+
+> 关于eclipse中自带的maven
+
+如果大家使用的是Eclipse的话，最好不要使用eclipse自带的Maven，原因有二：一是不好控制maven版本的更新；二是代码移植时也可能会造成maven版本不一致的问题。
+
+> 关于自定义jar包的处理
+
+如果是项目里有自己写的自定义jar包，在maven的pom文件中进行引用的时候是有讲究的。因为大家都知道，Jmeter项目中不管是引用第三方jar包或自定义的jar包时，都需要将该jar包放置于jmeter的lib/ext目录中。如果该jar能够在maven的中央仓库中找到，那么可以直接参照maven的jmeter插件中的wiki里面关于引用第三方jar包的说明进行配置即可。但如果是自己写的jar包，由于并没有在maven的中央仓库中，所以为了使maven在build时能够顺利找到该jar包，必须先在本地仓库中通过install命令安装该jar包，命令格式如下：
+
+mvn install:install-file -Dfile=[path-of-jar] -DgroupId=[path-in-local-repository] -DartifactId=[foldername] -Dversion=[versionname] -Dpackaging=jar
+
+比如我在工程中的配置如下： 
+![这里写图片描述](https://img-blog.csdn.net/20161211232235938?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcWluZ2NodW5qdW4=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+这样安装后，maven会在本地仓库中自动生成com/demo/jmeter/demo/1.0.0/路径，并且将mydemo-1.0.0.jar放在该路径下面，供maven进行引用。
+
+把jar包install到本地仓库后，我们在pom.xml中应该如何进行配置才能使maven每次在build时自动引用该jar包并放到jmeter的lib/ext目录中呢？答案如下：
+
+```xml
+<project>
+    [...]
+        <build>
+            <plugins>
+                <plugin>
+                    <groupId>com.lazerycode.jmeter</groupId>
+                    <artifactId>jmeter-maven-plugin</artifactId>
+                    <version>2.0.3</version>
+                    <executions>
+                        <execution>
+                            <id>jmeter-tests</id>
+                            <goals>
+                                <goal>jmeter</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <jmeterExtensions>
+                            <artifact>com.demo.jmeter:demo:1.0.0</artifact>
+                        </jmeterExtensions>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </build>
+    [...]
+</project>1234567891011121314151617181920212223242526
+```
+
+如此配置完毕后，那么每次maven在build时，便可以顺利地在本地仓库中找到指定的jar包，并放入jmeter对应的路径下。（PS：如果有多个类似的jar包，则只需分别先install到本地仓库，并增加多个“<artifact></artifact>”标签即可）
+
+> 对于Jmeter三大配置文件的处理
+
+对于Jmeter三大配置文件的处理。如果在项目中使用了自定义的properties文件，或修改了jmeter自带的jmeter.properties/system.properties，那么需要将这些properties文件跟jmeter的jmx脚本放在同一个文件夹内，即test/jmeter/xxx.properties（jmeter文件夹一般是自己建的），否则jmeter无法获取修改后的properties文件。
+
+三、 Github
+
+对于Github的项目管理这块，主要有以下几个基本操作需要注意。
+
+> 创建自己的github项目并上传项目文件
+
+这个比较简单，直接在github上先注册个账号，然后创建一个项目即可。关键是如何上传自己的项目文件到github上的项目文件中，简单说下步骤。
+
+a. 首先创建deploy keys。因为一般是通过ssh协议来上传，所以有必要先在本机生成ssh key，才能允许授权github项目的读写访问。具体步骤就不再累述，请参考文章：https://help.github.com/articles/generating-an-ssh-key/
+
+b. 然后在github的项目内找到ssh形式的访问地址，拷贝到内存中，如下图所示。
+
+![这里写图片描述](https://img-blog.csdn.net/20161215235354788?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcWluZ2NodW5qdW4=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+再在本地任意目录创建一个文件夹，并在git命令行内路由到该文件夹，输入以下命令：
+
+```shell
+git clone the-path-of-your-github-project1
+```
+
+这将会把github上的项目路径拷贝到本地目录中，并生成git控制文件，接下来就可以把本地的文件上传到github上了。
+
+首先将文件加入本地仓库：git add . 
+接下来commit到远程仓库：git commit -m “log-message” 
+再提交到master分支：git push -u origin master （过程中需要输入github用户名和密码）
+
+注意，此处由于上传的是maven项目工程，所以要注意，一般只需要上传src文件夹和pom.xml文件，不要将target文件夹上传到github中。
+
+四、Jenkins
+
+在Jenkins中我们只需要建立一个maven工程，其中部分配置如下 
+** 源码管理选git，直接指定github上的项目git地址即可； 
+** 构建触发器如果是线上接口监控一般选择定时构建，以一定的时间周期进行触发。如果是测试环境的接口监控，则选择“Build after other projects are built”或“Build when a change is pushed to GitHub”，表示依赖于开发上传代码的时间； 
+** build里面选择指定pom.xml（注意将github里面的pom.xml放置在根目录，否则jenkins可能无法识别路径），“Goals and options”这里填写“clean verify”; 
+** post steps，由于接口测试对结果的处理是包含在测试报告里面的，所以一般无法使用jenkins自带的对build结果的判断，需要自己写脚本来解析测试结果，并生成相关的报告，并发送邮件。这些事情可以自己写个自定义的jar来处理，然后指定jenkins去调用即可。
+
+设置完毕后，保存，完毕。
+
+## 后期可能的扩展
+
+- 在Jmeter脚本项目中根据公司业务补充更多的接口测试脚本
+- 脚本复用，利用Jmeter的性能监控插件，监控接口性能
+- 增加更多配置内容，使得本框架更加灵活可定制，增加可配置化模块（Jmeter Properties、邮件通知、测试报告展现等）
+- 加入性能场景分析模型，直接扩展接口测试脚本为性能测试脚本，实现接口和业务压力测试
+
+> 如果还不清楚，请参考：
+>
+> http://www.360doc.com/content/18/0511/14/28485610_753104059.shtml
+>
+> http://www.360doc.com/content/18/0511/14/28485610_753105598.shtml
+
+
+
+-----------------------------
+
+
+

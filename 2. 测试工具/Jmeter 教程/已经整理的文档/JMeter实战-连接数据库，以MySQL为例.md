@@ -201,6 +201,24 @@ Call test； //调用存储过程
 
 ###### 获取返回结果(所有返回值)
 
+###### 占位符
+
+通过 ?占位符 参数化
+
+① 写好sql语句，并用 ? 表示参数化的变量
+
+② 选择合适Query Type：
+
+　　select语句：Prepared Select Statement
+
+　非select语句：Prepared Update Statement
+
+③ 填写Parameter values & Paremeter types
+
+　　分别表示参数值和参数类型，根据输入 ? 的先后顺序输入到文本框中，用英文状态的逗号分隔,如下图
+
+
+
 #### 多sql语句
 
 ##### 一、环境准备：
