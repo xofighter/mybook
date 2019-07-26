@@ -102,64 +102,64 @@
 
 **五、****右键点击"HTTP请求"->添加->后置处理器->****BeanShell PostProcessor，并在脚本添加代码用以获取"topics"下JSONArray对象（请无视这粗鄙的代码结构。。。![害羞](http://static.blog.csdn.net/xheditor/xheditor_emot/default/shy.gif)）**
 
-```
- 
+```java
+import org.json.*;
+
+//设置全局变量
+static public int excellent_count = 0;
+
+//获取最后一次请求返回数据 （JMeter内置方法）
+String jsonResult = prev.getResponseDataAsString();
+
+//分析:TestHome首页json数据结构为{"topics":[{...},{...}...]}，外层JSONObject内层JSONArrary
+//获取"topics"下JSONArray对象
+JSONObject jsonObject = new JSONObject(jsonResult);
+JSONArray jsonArray = jsonObject.getJSONArray("topics");
+String string_jsonArray = jsonArray.toString();
+
+vars.put("string_jsonArray",string_jsonArray);
 ```
 
-1. `import org.json.*;`
-2.  
-3. `//设置全局变量`
-4. `static public int excellent_count = 0;`
-5.  
-6. `//获取最后一次请求返回数据 （JMeter内置方法）`
-7. `String jsonResult = prev.getResponseDataAsString();`
-8.  
-9. `//分析:TestHome首页json数据结构为{"topics":[{...},{...}...]}，外层JSONObject内层JSONArrary`
-10. `//获取"topics"下JSONArray对象`
-11. `JSONObject jsonObject = new JSONObject(jsonResult);`
-12. `JSONArray jsonArray = jsonObject.getJSONArray("topics");`
-13. `String string_jsonArray = jsonArray.toString();`
-14.  
-15. `vars.put("string_jsonArray",string_jsonArray);`
+1. `
 
 ![img](https://img-blog.csdn.net/20180302135633432)
 
 **六、添加断言Case01（对应第一条测试点），****右键点击"HTTP请求"->添加->断言->****BeanShell断言，然后填入以下脚本：从****BeanShell PostProcessorh提供的内置变量中获取JSONArray对象，然后通过条件"excellent=1"得出精华帖总数，从而判断精华帖是否>4**
 
-```
+```java
+import org.json.*;
+
+//设置全局变量用于记录精华帖数量
+static public int excellent_count = 0;
  
+//从BeanShell PostProcessor获取jsonArray
+var b = vars.get("string_jsonArray");
+JSONArray jsonArray = new JSONArray(b);
+ 
+//计算精华帖数量
+for (int i = 0;i < jsonArray.length();i++) {
+    excellent_result = jsonArray.getJSONObject(i).getInt("excellent");
+    if (excellent_result == 1){
+        //循环遍历全部文章的excellent值，若为1则精华帖数量excellent_count+1
+        excellent_count = excellent_count + 1;
+    }
+}
+
+if (excellent_count >4){
+    //Failure为false代表断言成功，且结果树不显示该断言`
+    Failure = false;
+    //日志输出结果
+    log.error("【Case01】执行成功，精华帖数量为" + excellent_count + "个。");
+}else{
+    //Failure为true则代表断言失败
+    Failure = true;
+    //设置FailureMessage为断言失败信息
+    FailureMessage = "【Case01】执行失败，精华帖数量为" + excellent_count + "个。" ;
+    log.error("【Case01】执行失败，精华帖数量为" + excellent_count + "个。" );
+}
 ```
 
-1. `import org.json.*;`
-2.  
-3. `//设置全局变量用于记录精华帖数量`
-4. `static public int excellent_count = 0;`
-5.  
-6. `//从BeanShell PostProcessor获取jsonArray`
-7. `var b = vars.get("string_jsonArray");`
-8. `JSONArray jsonArray = new JSONArray(b);`
-9.  
-10. `//计算精华帖数量`
-11. `for (int i = 0;i < jsonArray.length();i++) {`
-12. `excellent_result = jsonArray.getJSONObject(i).getInt("excellent");`
-13. `if (excellent_result == 1){`
-14. `//循环遍历全部文章的excellent值，若为1则精华帖数量excellent_count+1`
-15. `excellent_count = excellent_count + 1;`
-16. `}`
-17. `}`
-18.  
-19. `if (excellent_count >4){`
-20. `//Failure为false代表断言成功，且结果树不显示该断言`
-21. `Failure = false;`
-22. `//日志输出结果`
-23. `log.error("【Case01】执行成功，精华帖数量为" + excellent_count + "个。");`
-24. `}else{`
-25. `//Failure为true则代表断言失败`
-26. `Failure = true;`
-27. `//设置FailureMessage为断言失败信息`
-28. `FailureMessage = "【Case01】执行失败，精华帖数量为" + excellent_count + "个。" ;`
-29. `log.error("【Case01】执行失败，精华帖数量为" + excellent_count + "个。" );`
-30. `}`
+
 
 ![img](https://img-blog.csdn.net/20180302140312770)
 

@@ -52,8 +52,6 @@
 
  
 
- 
-
 ## 3、修改配置
 
 **（1****）jmeter.properties**
@@ -80,14 +78,6 @@
 
  
 
- 
-
- 
-
- 
-
- 
-
 # 三、测试结果生成html
 
  
@@ -98,8 +88,7 @@
 
 本例中将build文件放置在：D:\jenkins\workspace\API-Test
 
- 
-
+ ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project name="ant-jmeter-test" default="run" basedir=".">
@@ -184,9 +173,8 @@
 
 ​      </xslt>
 
-```
+
  <!-- 因为上面生成报告的时候，不会将相关的图片也一起拷贝至目标目录，所以，需要手动拷贝 --> 
-```
 
   <copy todir="${jmeter.result.html.dir}">
 
@@ -201,6 +189,11 @@
 ​        </copy>
 
 ​    </target>
+ ```
+
+
+
+
 
  
 

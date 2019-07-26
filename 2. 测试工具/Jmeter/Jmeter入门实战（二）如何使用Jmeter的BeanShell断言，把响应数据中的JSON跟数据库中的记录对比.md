@@ -57,291 +57,95 @@ GSON是Google的一个解析JSON的工具，笔者不太懂java，但是JSON字�
 ```java
 import java.sql.*;
 
-
-
 import java.util.*;
-
-
 
 import java.lang.*;
 
-
-
 import org.apache.regexp.*;
-
-
 
 import com.google.gson.JsonObject;  
 
-
-
 import com.google.gson.JsonParser; 
-
-
-
- 
-
-
-
- 
-
-
 
 //数据库连接字段
 
-
-
 String drive = "com.mysql.jdbc.Driver";
-
-
 
 String url = "jdbc:mysql://yourdatabase:yourDatabasePort/";
 
-
-
 String dbName = "YourDataBaseName";
-
-
 
 String user = "YourDataBaseUser";
 
-
-
 String pass = "YourDataBasePass";
-
-
-
- 
-
-
-
- 
-
-
 
 String history = "";
 
-
-
 String response = "";
-
-
 
 String failuer = "";
 
-
-
- 
-
-
-
 //vars.get是Jmeter提供的方法，可以取到变量值，这个caseno是用来关联用例和数据库中结果的
-
-
 
 String CaseNo = vars.get("caseno");
 
-
-
- 
-
-
-
 //下面是查询的SQL
-
-
 
 String query = "SELECT response_data From test_json_compare Where case_no = '" + CaseNo + "'";
 
-
-
- 
-
-
-
 //JDBC声明
-
-
 
 Connection Mycon = null;
 
-
-
 Statement Mystmt = null;
-
-
 
 ResultSet Myrset = null;
 
-
-
- 
-
-
-
 //try中获取数据库连接
 
-
-
 try{
-
-
-
 	Mycon = DriverManager.getConnection(url+dbName, user, pass);
+}	catch(SQLException e){
+}
+Mystmt = Mycon.createStatement();
 
-
-
-	
-
-
-
-		}	catch(SQLException e){
-
-
-
-		
-
-
-
-	}
-
-
-
-	Mystmt = Mycon.createStatement();
-
-
-
-	Myrset = Mystmt.executeQuery(query);
-
-
-
- 
-
-
+Myrset = Mystmt.executeQuery(query);
 
 //prev.getResponseDataAsString是Jmeter提供的方法，可以调取上次请求的响应字符串
 
-
-
 	response = prev.getResponseDataAsString();
-
-
-
- 
-
-
 
 //如果取到库中的数据，赋值给history
 
-
-
 	while (Myrset.next()){
-
-
 
 	history = Myrset.getString(1);
 
-
-
 	}
-
-
-
- 
-
-
 
 	Myrset.close();
 
-
-
 	Mystmt.close();
-
-
-
- 
-
-
-
- 
-
-
 
 //Gson提供的方法，原理笔者也不明白，效果是把字符串生成Json对象
 
-
-
- 
-
-
-
 JsonParser parser = new JsonParser();  
-
-
 
 JsonObject responseObj = (JsonObject) parser.parse(response);  
 
-
-
 JsonParser parser1 = new JsonParser();          
-
-
 
 JsonObject historyObj = (JsonObject) parser1.parse(history);  
 
-
-
- 
-
-
-
- 
-
-
-
-if(history == "")
-
-
-
-{
-
-
-
+if(history == ""){
 	Failure = true;
-
-
-
 	FailureMessage = "连接数据库失败或者数据库内没有历史数据"; 
+	//调用Gson提供的Json对象euqals方法判断是否一致
 
+}else if(responseObj.equals(historyObj) == false){ 
 
-
-	
-
-
-
-//调用Gson提供的Json对象euqals方法判断是否一致
-
-
-
-}else if(responseObj.equals(historyObj) == false)
-
-
-
-{ 
-
-
-
-//把断言失败置为真	
-
-
-
-Failure = true;
-
-
-
-FailureMessage = "和历史数据不匹配"; 
-
-
-
+    //把断言失败置为真	
+    Failure = true;
+    FailureMessage = "和历史数据不匹配"; 
 }
 ```

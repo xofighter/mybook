@@ -1,5 +1,7 @@
 # Jmeter之Bean shell使用（全）
 
+2018年03月22日 11:02:41 [IT冲浪者](https://me.csdn.net/lykangjia) 阅读数 4190
+
 
 
 **一、什么是Bean Shell**

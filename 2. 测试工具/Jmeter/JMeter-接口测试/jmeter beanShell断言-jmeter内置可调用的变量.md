@@ -112,6 +112,113 @@ log.info("SamplerData=============================:"+SamplerData);
 
 -----------------
 
+## [Jmeter 的 vars 和 props 用法](https://www.cnblogs.com/a00ium/p/10324638.html)
+
+meter 的 JSR223 控件是 代替 BeanShell 的新一代脚本控件，支持多种脚本语言，尤其是其中的 Groovy，更是重点推荐使用的脚本语言，本文研究其中的 vars 和 props 两种对象的用法。
+
+#### 二者的区别
+
+props 和 vars 主要有两点区别：
+
+> vars 只能在当前线程内使用，props 可以跨线程组使用
+> vars 只能保存 String 或者 Object，props 是 Hashtable 对象
+
+#### vars
+
+![img](https://www.lfhacks.com/images/1661.png)
+
+vars 中的变量仅对当前线程组内可见，跨线程组则需要使用属性。
+
+##### 保存字符串变量
+
+读取变量值使用 `vars.put(var, value)` 函数，例如
+
+```
+vars.put("IS_OPEN", "true");
+```
+
+注意，上面的 `"NEW_VALUE"` 必须是字符串类型，传递其他类型，包括 null，都会导致报错。如果想使用数字、数组等类型，一种方法是做类型转换：
+
+```
+vars.put("MUST_BE_STRING", "" + 1);
+vars.put("MUST_BE_STRING", (String)1);
+vars.put("MUST_BE_STRING", [2, 3, 4].toString());
+vars.put("MUST_BE_STRING", (String)[1,2]);
+vars.put("MUST_BE_STRING", "" + [2, 3, 4]);
+vars.put("MUST_BE_STRING", "" + true);
+vars.put("MUST_BE_STRING", true.toString());
+```
+
+另一种方法是使用 [对象存储方法](https://www.lfhacks.com/tech/jmeter-vars-props#saveobj) 。
+
+##### 读取字符串变量
+
+`vars.get()` 方法用于读取变量值：
+
+```
+vars.get("IS_OPEN");
+```
+
+如果传递的 `"VARIABLE_NAME"` 预先不存在，将返回 `null`.
+
+##### 保存对象
+
+vars保存对象类型 (包括 List、Map、Closure 之类)，使用如下方法：
+
+```
+vars.putObject("OBJECT_NAME", Object);
+```
+
+比如
+
+```
+vars.putObject("NUMBER", 1);
+vars.putObject("ARRAY", []);
+vars.putObject("CLOSURE", { x, y -> x+y });
+```
+
+##### 读取对象
+
+vars 读取对象类型，使用如下方法：
+
+```
+vars.getObject("OBJECT_NAME");
+```
+
+#### props
+
+![img](https://www.lfhacks.com/images/1662.png)
+
+props 继承了 Hashtable 的类，所以拥有与 vars 类似的 get 和 put 方法，另外还继承了 Hashtable 的其他方法 :
+
+判断某项属性是否存在，返回布尔值
+
+```
+props.containsKey("PROPERTY_NAME") 
+```
+
+判断某项值是否存在，返回布尔值
+
+```
+props.contains("PROPERTY_VALUE")
+```
+
+删除某个值
+
+```
+props.remove("PROPERTY_NAME")
+```
+
+所有属性以字符串形式表示
+
+```
+props.toString()
+```
+
+
+
+---------------
+
 # Jmeter Ant Task如何让beanshell断言失败的详细信息展示在report里面
 
  
@@ -267,117 +374,3 @@ System.out.println(prev.getResponseCode());System.out.println(prev.getResponseDa
 
 ------------------------------
 
-[DaisyLinux](https://www.cnblogs.com/a00ium/)
-
-
-
-## [Jmeter 的 vars 和 props 用法](https://www.cnblogs.com/a00ium/p/10324638.html)
-
-meter 的 JSR223 控件是 代替 BeanShell 的新一代脚本控件，支持多种脚本语言，尤其是其中的 Groovy，更是重点推荐使用的脚本语言，本文研究其中的 vars 和 props 两种对象的用法。
-
-#### 目录
-
-- [二者的区别](https://www.lfhacks.com/tech/jmeter-vars-props#differ)
-- [vars](https://www.lfhacks.com/tech/jmeter-vars-props#vars)
-- [props](https://www.lfhacks.com/tech/jmeter-vars-props#props)
-
-> 本文使用的 Jmeter 是 4.0 版本
-
-#### 二者的区别
-
-props 和 vars 主要有两点区别：
-
-> vars 只能在当前线程内使用，props 可以跨线程组使用
-> vars 只能保存 String 或者 Object，props 是 Hashtable 对象
-
-#### vars
-
-![img](https://www.lfhacks.com/images/1661.png)
-
-vars 中的变量仅对当前线程组内可见，跨线程组则需要使用属性。
-
-##### 保存字符串变量
-
-读取变量值使用 `vars.put(var, value)` 函数，例如
-
-```
-vars.put("IS_OPEN", "true");
-```
-
-注意，上面的 `"NEW_VALUE"` 必须是字符串类型，传递其他类型，包括 null，都会导致报错。如果想使用数字、数组等类型，一种方法是做类型转换：
-
-```
-vars.put("MUST_BE_STRING", "" + 1);
-vars.put("MUST_BE_STRING", (String)1);
-vars.put("MUST_BE_STRING", [2, 3, 4].toString());
-vars.put("MUST_BE_STRING", (String)[1,2]);
-vars.put("MUST_BE_STRING", "" + [2, 3, 4]);
-vars.put("MUST_BE_STRING", "" + true);
-vars.put("MUST_BE_STRING", true.toString());
-```
-
-另一种方法是使用 [对象存储方法](https://www.lfhacks.com/tech/jmeter-vars-props#saveobj) 。
-
-##### 读取字符串变量
-
-`vars.get()` 方法用于读取变量值：
-
-```
-vars.get("IS_OPEN");
-```
-
-如果传递的 `"VARIABLE_NAME"` 预先不存在，将返回 `null`.
-
-##### 保存对象
-
-vars保存对象类型 (包括 List、Map、Closure 之类)，使用如下方法：
-
-```
-vars.putObject("OBJECT_NAME", Object);
-```
-
-比如
-
-```
-vars.putObject("NUMBER", 1);
-vars.putObject("ARRAY", []);
-vars.putObject("CLOSURE", { x, y -> x+y });
-```
-
-##### 读取对象
-
-vars 读取对象类型，使用如下方法：
-
-```
-vars.getObject("OBJECT_NAME");
-```
-
-#### props
-
-![img](https://www.lfhacks.com/images/1662.png)
-
-props 继承了 Hashtable 的类，所以拥有与 vars 类似的 get 和 put 方法，另外还继承了 Hashtable 的其他方法 :
-
-判断某项属性是否存在，返回布尔值
-
-```
-props.containsKey("PROPERTY_NAME") 
-```
-
-判断某项值是否存在，返回布尔值
-
-```
-props.contains("PROPERTY_VALUE")
-```
-
-删除某个值
-
-```
-props.remove("PROPERTY_NAME")
-```
-
-所有属性以字符串形式表示
-
-```
-props.toString()
-```

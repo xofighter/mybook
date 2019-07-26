@@ -49,6 +49,7 @@
 
 **上面的miniapp.py文件具体封装的方法如下**
 
+```python
 # coding=utf-8
 
 import pandas as pd
@@ -58,7 +59,6 @@ suffix_path = ‘–device ios:///[http://127.0.0.1:8100](http://127.0.0.1:8100/
 
 def run_test():
 
-```
 data = pd.read_excel('/Users/mi.li/Documents/miniapp_case.xlsx')
 data = pd.DataFrame(data.values)
 index = 0
@@ -71,9 +71,9 @@ for rundir in data[1]:
     print cmd    
     print os.system(cmd)   
 1234567891011
-```
 
 run_test()
+```
 
 **上面的txtnew.py文件具体封装的方法如下：**
 
